@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+#
+# Environmental variables used by the experimental protocols.
+#       Source this file in .bashrc to have the variables available.
+#
+
+export prot_setup="HEKA-EPC10"
+
+if [ $prot_setup == "HEKA-EPC10" ] ; then 
+	# Conversion factors (HEKA setups)))
+	prot_vc_in_factor=0 
+	prot_vc_out_factor=0
+	prot_cc_in_factor=100
+	prot_cc_out_factor="0.01"
+	prot_vc_in_units="pA"
+	prot_vc_out_units="mV"
+	prot_cc_in_units="mV"
+	prot_cc_out_units="pA"
+fi
+
+function prot_set_headstage {
+	# Sets lcg enviromental variables given the headstage and the protocol. 
+	headstage=$1
+	protocol=$2
+	if [ $prot_setup == "HEKA-EPC10" ] ; then 
+		# Channel definitions (2 headstages)
+		# These depende on the wiring of the setup 
+		prot_cc_in=(0 1);
+		prot_cc_out=(0 1);
+		prot_vc_in=(2 3);
+		prot_vc_out=(0 1);
+	fi
+	if [ $protocol == 'vc' ]; then
+		export AI_CONVERSION_FACTOR=$prot_vc_in_factor
+		export AO_CONVERSION_FACTOR=$prot_vc_out_factor
+		export AI_CHANNEL=${prot_vc_in[$headstage]}
+		export AO_CHANNEL=${prot_vc_out[$headstage]}
+		export INPUT_UNITS=$prot_vc_in_units
+		export OUTPUT_UNITS=$prot_vc_out_units
+	elif [ $protocol == 'cc' ]; then
+		export AI_CONVERSION_FACTOR=$prot_cc_in_factor
+		export AO_CONVERSION_FACTOR=$prot_cc_out_factor
+		export AI_CHANNEL=${prot_cc_in[$headstage]}
+		export AO_CHANNEL=${prot_cc_out[$headstage]}
+		export INPUT_UNITS=$prot_cc_in_units
+		export OUTPUT_UNITS=$prot_cc_out_units
+	else
+		echo Protocol $protocol not implemented. 
+	fi
+}
+export -f prot_set_headstage
+
+export prot_vc_in_factor
+export prot_vc_out_factor
+export prot_cc_in_factor
+export prot_cc_out_factor
+export prot_cc_in_units
+export prot_cc_out_units
+export prot_vc_in_units
+export prot_vc_out_units
+
+# Default steps of the protocol
+export prot_kernel="yes"
+export prot_prot="yes"
+export prot_figures="yes"
+
+# Default sampling rate
+export prot_srate=30000
+
+# Path to the prot folder
+export PROTDIR=$HOME/lib/prot
+# Path to the matlab library 
+# git clone https://github.com/jcouto/matlab.git
+export MATLABLIBDIR=$HOME/lib/matlab
+
+export PATH=$PATH:$PROTDIR/scripts

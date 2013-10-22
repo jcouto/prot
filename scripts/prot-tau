@@ -1,0 +1,95 @@
+#! /usr/bin/env bash
+#
+# Protocol to inject steps to characterize the FI and VI curves.
+#
+tau_amp="-300"
+tau_dur=
+tau_n=2
+tau_i=5
+kernel="yes"
+tau="yes"
+figures="yes"
+headstage=1
+
+usage="Step protocol. Injects current steps in a cell \n
+to charactherize passive and active input-output relations.\n
+    Usage : `basename $0` [options <value>]\n
+\n
+    Options:\n
+        \t-a amplitude      Amplitude of the steps.\n
+        \t   ($tau_amp pA)       Specify the start, stop and step values.\n
+        \t-d duration             Duration of the step.\n
+        \t  ($tau_dur sec)\n         
+        \t-i interval             Interval to wait between trials.\n
+        \t  ($tau_i sec)\n
+        \t-n repetitions          Number of repetitions of each trial.\n
+        \t  ($tau_n)\n
+        \t-H headstage            Headstage to use.\n
+        \t  ($headstage)\n
+        \t-h,--help               Display this help message and quit.\n
+        \t--no-kernel             Does not compute the kernel\n
+        \t--no-tau              Does not run the steps\n
+        \t--no-figures            Does not analyze the data\n
+    
+    Examples:\n
+        \tRun 5ms long pulse of -500 pA on headstage 2. \n
+        \t\t  prot-tau -a -500 -n 40 -H 2\n
+
+"
+if ! options=$(getopt -o ha:d:i:n:H: --long no-kernel,no-tau,no-figures -- "$@")
+then
+    echo -e $usage
+    exit 1
+fi
+
+set -- $options
+
+while [ $# -gt 0 ]
+do
+    case $1 in
+    -h) echo -e $usage
+        exit 0 ;;
+    --no-kernel) kernel="no" ;;
+    --no-tau) tau="no" ;;
+    --no-figures) figures="no" ;;
+    # for options with required arguments, an additional shift is required
+    -a) tau_amp=$2 ; shift;;
+    -d) tau_dur=$2 ; shift;;
+    -i) tau_i=$2 ; shift;;
+    -n) tau_n=$2 ; shift;;
+    -H) tau_H=$2 ; shift;;
+    --) shift; break;;
+    -*) echo "$0: error - unrecognized option $1" 1>&2; exit 1;;
+    *) break;;
+    esac
+    shift
+done
+
+if [ $headstage == "1" ] ; then
+    echo "Running steps protocol on headstage 1."
+    coeff=$prot_ccin0
+    AI_CONVERSION_FACTOR=$prot_cc_in_factor
+    AO_CONVERSION_FACTOR=$prot_cc_out_factor
+    AI_CHANNEL=$prot_cc_in0
+    AO_CHANNEL=$prot_cc_out0
+fi
+if [ $headstage == "2" ] ; then
+    echo "Running steps protocol on headstage 2."
+    coeff=$prot_ccin1
+    AI_CONVERSION_FACTOR=$prot_cc_in_factor
+    AO_CONVERSION_FACTOR=$prot_cc_out_factor
+    AI_CHANNEL=$prot_cc_in1
+    AO_CHANNEL=$prot_cc_out1
+fi
+if [ $kernel == "yes" ] ; then
+    lcg-kernel -I $AI_CHANNEL -O $AO_CHANNEL -F $prot_srate
+fi
+
+if [ $tau == "yes" ] ; then
+    lcg-tau -a $tau_amp -d $tau_dur \
+        -i $tau_i -n $tau_n -F $prot_srate --no-kernel
+fi
+
+if [ $figures == "yes" ] ; then
+    matlab -nodesktop -nosplash < $PROTDIR/matlab/analize_tau_protocol.m
+fi

@@ -1,0 +1,88 @@
+#! /usr/bin/env bash
+#
+# Protocol to inject steps to characterize the FI and VI curves.
+#
+amp="-300,500,50"
+dur=1
+T=1
+n=2
+i=5
+kernel=$prot_kernel
+prot=$prot_prot
+figures=$prot_figures
+headstage=0
+
+usage="Step protocol. Injects current steps in a cell \n
+to charactherize passive and active input-output relations.\n
+    Usage : `basename $0` [options <value>]\n
+\n
+    Options:\n
+        \t-a start,stop,step      Amplitude of the steps.\n
+        \t   ($step_amp pA)       Specify the start, stop and step values.\n
+        \t-d duration             Duration of the step.\n
+        \t  ($step_dur sec)\n         
+        \t-t tail                 Duration before and after the step.\n
+        \t  ($step_tail sec)\n
+        \t-i interval             Interval to wait between trials.\n
+        \t  ($step_i sec)\n
+        \t-n repetitions          Number of repetitions of each trial.\n
+        \t  ($step_n)\n
+        \t-H headstage            Headstage to use.\n
+        \t  ($headstage)\n
+        \t-h,--help               Display this help message and quit.\n
+        \t--(no-)kernel			  (Does not) compute the kernel\n
+        \t--(no-)prot             (Does not) run the steps\n
+        \t--(no-)figures          (Does not) analyze the data\n
+    
+    Examples:\n
+        \tRun 800ms long steps from -500 to 1500 pA with 100pA intervals on headstage 2 \n
+        \t\t  prot-steps -a -500,1500,100 -n 1 -d 0.8 -H 2\n
+
+"
+if ! options=$(getopt -o ha:d:t:i:n:H: --long no-kernel,kernel,no-prot,prot,no-figures,figures -- "$@")
+then
+    echo -e $usage
+    exit 1
+fi
+
+set -- $options
+
+while [ $# -gt 0 ]
+do
+    case $1 in
+    -h) echo -e $usage
+        exit 0 ;;
+    --no-kernel) kernel="no" ;;
+    --kernel) kernel="yes" ;;
+    --no-prot) prot="no" ;;
+    --prot) prot="yes" ;;
+    --no-figures) figures="no" ;;
+    --figures) figures="yes" ;;
+    # for options with required arguments, an additional shift is required
+    -a) amp=$2 ; shift;;
+    -d) dur=$2 ; shift;;
+    -t) T=$2 ; shift;;
+    -i) i=$2 ; shift;;
+    -n) n=$2 ; shift;;
+    -H) headstage=$2 ; shift;;
+    --) shift; break;;
+    -*) echo "$0: error - unrecognized option $1" 1>&2; exit 1;;
+    *) break;;
+    esac
+    shift
+done
+
+prot_set_headstage $headstage "cc"
+
+if [ $kernel == "yes" ] ; then
+	echo    lcg-kernel -I $AI_CHANNEL -O $AO_CHANNEL -F $prot_srate
+fi
+
+if [ $prot == "yes" ] ; then
+    echo lcg-steps -a $amp -d $dur -t $T \
+        -i $i -n $n -F $prot_srate --no-kernel
+fi
+
+if [ $figures == "yes" ] ; then
+    echo matlab -nodesktop -nosplash < $PROTDIR/matlab/analize_steps_protocol.m
+fi
