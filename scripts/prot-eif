@@ -1,24 +1,30 @@
 #! /usr/bin/env bash
 #
-# Protocol to inject steps to characterize the FI and VI curves.
+# Protocol to inject noise and to characterize the dynamic IV curves.
 #
-amp="-300,500,50"
-dur=1
+amp=200,0
+sd="75,75"
+tau="3,10"
+dur=40
 T=1
-n=2
-i=5
+n=3
+i=10
 kernel=$prot_kernel
 prot=$prot_prot
 figures=$prot_figures
 headstage=0
 
-usage="Step protocol. Injects current steps in a cell \n
-to charactherize passive and active input-output relations.\n
+usage="EIF protocol. Injects current noise in cell \n
+to charactherize the dynamic IV curve. Sums 2 waveforms...\n
     Usage : `basename $0` [options <value>]\n
 \n
     Options:\n
-        \t-a start,stop,step      Amplitude of the steps.\n
-        \t   ($amp pA)       Specify the start, stop and step values.\n
+        \t-a amplitude		      Amplitude of the noise.\n
+        \t   ($amp pA)				.\n
+        \t-s standard deviation   Standard deviation of the noise.\n
+        \t   ($sd pA )			  Percentage of the amplitude (if bellow zero).\n
+        \t-T time constant		  Time constant of the noise.\n
+        \t   ($tau ms)       Specify the start, stop and step values.\n
         \t-d duration             Duration of the step.\n
         \t  ($dur sec)\n         
         \t-t tail                 Duration before and after the step.\n
@@ -39,7 +45,7 @@ to charactherize passive and active input-output relations.\n
         \t\t  prot-steps -a -500,1500,100 -n 1 -d 0.8 -H 2\n
 
 "
-if ! options=$(getopt -o ha:d:t:i:n:H: --long no-kernel,kernel,no-prot,prot,no-figures,figures -- "$@")
+if ! options=$(getopt -o ha:d:T:s:t:i:n:H: --long no-kernel,kernel,no-prot,prot,no-figures,figures -- "$@")
 then
     echo -e $usage
     exit 1
@@ -62,6 +68,8 @@ do
     -a) amp=$2 ; shift;;
     -d) dur=$2 ; shift;;
     -t) T=$2 ; shift;;
+    -s) sd=$2 ; shift;;
+    -T) tau=$2 ; shift;;
     -i) i=$2 ; shift;;
     -n) n=$2 ; shift;;
     -H) headstage=$2 ; shift;;
@@ -79,10 +87,11 @@ if [ $kernel == "yes" ] ; then
 fi
 
 if [ $prot == "yes" ] ; then
-    lcg-steps -a $amp -d $dur -t $T \
+	
+	lcg-ou -m $amp -s $sd -t $tau -d $dur -D $T \
         -i $i -n $n -F $prot_srate --no-kernel
 fi
 
 if [ $figures == "yes" ] ; then
-    matlab -nodesktop -nosplash < $PROTDIR/matlab/analize_steps_protocol.m
+    matlab -nodesktop -nosplash < $PROTDIR/matlab/analize_eif_protocol.m
 fi

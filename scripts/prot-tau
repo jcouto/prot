@@ -4,7 +4,6 @@
 #
 amp=-300
 dur=10
-T=1
 n=30
 i=1
 kernel=$prot_kernel
@@ -21,8 +20,6 @@ to charactherize passive and active input-output relations.\n
         \t   ($amp pA)       \n
         \t-d duration             Duration of the pulse (ms).\n
         \t  ($dur ms)\n         
-        \t-t tail                 Duration before and after the step.\n
-        \t  ($T sec)\n
         \t-i interval             Interval to wait between trials.\n
         \t  ($i sec)\n
         \t-n repetitions          Number of repetitions of each trial.\n
@@ -39,13 +36,13 @@ to charactherize passive and active input-output relations.\n
         \t\t  prot-tau -a --300 -n 1 -d 10 -H 2\n
 
 "
-if ! options=$(getopt -o ha:d:t:i:n:H: --long no-kernel,kernel,no-prot,prot,no-figures,figures -- "$@")
+if ! options=$(getopt -o ha:d:i:n:H: --long no-kernel,kernel,no-prot,prot,no-figures,figures -- "$@")
 then
     echo -e $usage
     exit 1
 fi
 
-set -- $options
+eval set -- "$options"
 
 while [ $# -gt 0 ]
 do
@@ -61,7 +58,6 @@ do
     # for options with required arguments, an additional shift is required
     -a) amp=$2 ; shift;;
     -d) dur=$2 ; shift;;
-    -t) T=$2 ; shift;;
     -i) i=$2 ; shift;;
     -n) n=$2 ; shift;;
     -H) headstage=$2 ; shift;;
@@ -75,14 +71,14 @@ done
 prot_set_headstage $headstage "cc"
 
 if [ $kernel == "yes" ] ; then
-	echo    lcg-kernel -s $prot_kernel_sd -I $AI_CHANNEL -O $AO_CHANNEL -F $prot_srate
+	lcg-kernel -s $prot_kernel_sd -I $AI_CHANNEL -O $AO_CHANNEL -F $prot_srate
 fi
 
 if [ $prot == "yes" ] ; then
-    echo lcg-tau -a $amp -d $dur -t $T \
+    lcg-tau -a $amp -d $dur \
         -i $i -n $n -F $prot_srate --no-kernel
 fi
 
 if [ $figures == "yes" ] ; then
-    echo matlab -nodesktop -nosplash < $PROTDIR/matlab/analize_tau_protocol.m
+    matlab -nodesktop -nosplash < $PROTDIR/matlab/analize_tau_protocol.m
 fi

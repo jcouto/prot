@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+# Script to create folders for an experiment.
+# Creates folders based in the rule YYYYMMDD[A-Z][01-99].
+# Appends also an info file and goes inside the first directory
+
+# Default parameters.
+FOLDERNAMES=(tau steps eif sinusoids)
+FILENAME="experiment.txt"
+AGE="NA"
+PIPETTE[0]="NA"
+CFAST[0]="NA"
+BRIDGE[0]="AEC"
+CELLS[0]="Purkinje"
+BRAIN_AREA="Cerebellum_vermis"
+AUTHOR=`getent passwd $USER | cut -d ':' -f 5| cut -d ',' -f 1`
+PROJECT="pkj_sin"
+AMPLIFIER="HEKA_EPC10"
+
+#	mkdir -p $directory/$cell/tau/01
+#	mkdir -p $directory/$cell/steps/01
+#	mkdir -p $directory/$cell/noise/01
+#	mkdir -p $directory/$cell/hyperpolarizing/01
+#	mkdir -p $directory/$cell/hyperpolarizing/02
+#	mkdir -p $directory/$cell/ap/01
+#	mkdir -p $directory/$cell/ap/02
+usage()
+{
+    echo
+    echo "create_experiment_folder"
+    echo "    Creates an directory tree for an experiment."
+    echo
+    echo "Usage : `basename $0` [options <value>]"
+    echo
+    echo "where options are:"
+    echo
+    echo "   -h   display this help message"
+    echo "   -t   cell type (default = $CELL)"
+    echo "   -r   brain region (default = $BRAIN_AREA)"
+    echo "        NOTE: if multiple names are used the directory tree will contain cell[N]"
+    echo "        Names must be separate by commas and have no spaces!"
+    echo "   -a   Age of the animal/culture (default = $AGE)" 
+    echo "   -p   Pipette resistance before patch (default = $PIPETTE)" 
+    echo "   -c   Resistance compensation (default = $BRIDGE)" 
+    echo "   -C   Capacitance compensation (default = $CFAST)" 
+    echo "   -P   Project code (default = $PROJECT)"
+    echo "   -A   Author/Experimenter (default = $AUTHOR)"
+    echo "   -m   Amplifier used in the experiment (default = $AMPLIFIER)"
+    echo
+}
+
+make_subfolders()
+{
+    for f in ${FOLDERNAMES[@]}
+    do
+            mkdir -p $f/01
+    done
+
+}
+write_info_file()
+{
+    echo "date = "`date` > $FILENAME
+    echo "author = "$AUTHOR > $FILENAME
+    echo "project = "$PROJECT >> $FILENAME
+    echo "cell_type = "$1 >> $FILENAME
+    echo "pipette_resistance = "$2 >> $FILENAME
+    echo "bridge_balance = "$3 >> $FILENAME
+    echo "cap_compensation = "$4 >> $FILENAME
+    echo "brain_area = "$BRAIN_AREA >> $FILENAME
+    echo "age = "$AGE >> $FILENAME
+    echo "amplifier = "$AMPLIFIER >> $FILENAME
+}
+
+# Find out the name of the directory.
+code=A
+directory=`date +%Y%m%d`${code}01
+while [ -d $directory ] ; do
+	code=$(echo $code | tr 'A-Y' 'B-Z')
+	directory=`date +%Y%m%d`${code}01
+done
+
+# Parse the input arguments
+
+set -f; IFS=,
+while getopts ":t:r:a:p:c:C:P:A:m:h" opt ; do
+    case $opt in
+	t)
+	    CELLS=($OPTARG)
+        ;;
+	r)
+	    BRAIN_AREA=$OPTARG
+	    ;;
+	a)
+	    AGE=$OPTARG
+	    ;;
+	p)
+	    PIPETTE=($OPTARG)
+	    ;;
+	c)
+	    BRIDGE=($OPTARG)
+	    ;;
+	C)
+	    CFAST=($OPTARG)
+	    ;;
+    P)
+	    PROJECT=$OPTARG
+	    ;;
+    A)
+	    AUTHOR=$OPTARG
+	    ;;
+	m)
+	    AMPLIFIER=$OPTARG
+	    ;;
+	h)
+	    usage
+	    exit 0
+	    ;;
+	\?)
+	    echo "Invalid option: -$OPTARG."
+	    echo "Type `basename $0` -h for help."
+	    exit 1
+	    ;;
+    esac
+done
+set +f; unset IFS
+
+# Are there multiple cells?
+if [[ ${#CELLS[@]} -ge 2 ]]
+then
+    for ((i=0; i < ${#CELLS[@]} ; i++))
+    do
+        # Fix parameters.
+        if [[ -z ${PIPETTE[$i]} ]]
+        then
+            PIPETTE[$i]=${PIPETTE[0]}
+#           echo Missing value of pipette resistance value! Using ${PIPETTE[$i]}
+        fi
+        if [[ -z ${BRIDGE[$i]} ]]
+        then
+            BRIDGE[$i]=${BRIDGE[0]}
+#           echo Missing value bridge balance! Using ${BRIDGE[$i]}.
+        fi
+        if [[ -z ${CFAST[$i]} ]]
+        then
+            CFAST[$i]=${CFAST[0]}
+#       echo Missing CFAST value! Using ${CFAST[$i]}
+        fi
+
+        folder="$directory"/cell"$(printf %02d $(($i+1)))"
+        mkdir -p $folder
+        cd $folder
+        echo
+        echo +++++++++++ $folder +++++++++++ 
+        write_info_file ${CELLS[$i]} ${PIPETTE[$i]} ${BRIDGE[$i]} ${CFAST[$i]} 
+        cat $FILENAME
+        make_subfolders
+        cd ../../
+    done
+else
+    folder="$directory"
+    mkdir -p $folder
+    cd $folder
+    echo +++++++++++ $folder +++++++++++ 
+    write_info_file ${CELLS[0]} ${PIPETTE[0]} ${BRIDGE[0]} ${CFAST[0]} 
+    cat $FILENAME
+    make_subfolders
+fi
+echo 
+echo ++++++++++++++++++++++++++++++ 
+echo Created directory tree in $directory
