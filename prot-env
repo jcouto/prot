@@ -22,7 +22,7 @@ elif [ $prot_setup == "AXON-200B" ] ; then
 	prot_vc_in_factor=400 
 	prot_vc_out_factor=0.05
 	prot_cc_in_factor=20
-	prot_cc_out_factor="0.00025"
+	prot_cc_out_factor="0.0025"
 	prot_vc_in_units="pA"
 	prot_vc_out_units="mV"
 	prot_cc_in_units="mV"

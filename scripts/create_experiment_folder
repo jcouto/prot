@@ -4,25 +4,18 @@
 # Appends also an info file and goes inside the first directory
 
 # Default parameters.
-FOLDERNAMES=(tau steps eif sinusoids)
+FOLDERNAMES=(tau steps eif)
 FILENAME="experiment.txt"
 AGE="NA"
 PIPETTE[0]="NA"
 CFAST[0]="NA"
 BRIDGE[0]="AEC"
-CELLS[0]="Purkinje"
-BRAIN_AREA="Cerebellum_vermis"
+CELLS[0]="PC"
+BRAIN_AREA="Somatosensory"
 AUTHOR=`getent passwd $USER | cut -d ':' -f 5| cut -d ',' -f 1`
-PROJECT="pkj_sin"
-AMPLIFIER="HEKA_EPC10"
+PROJECT="meridian"
+AMPLIFIER="AXON_200B"
 
-#	mkdir -p $directory/$cell/tau/01
-#	mkdir -p $directory/$cell/steps/01
-#	mkdir -p $directory/$cell/noise/01
-#	mkdir -p $directory/$cell/hyperpolarizing/01
-#	mkdir -p $directory/$cell/hyperpolarizing/02
-#	mkdir -p $directory/$cell/ap/01
-#	mkdir -p $directory/$cell/ap/02
 usage()
 {
     echo

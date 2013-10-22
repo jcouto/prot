@@ -81,4 +81,5 @@ fi
 
 if [ $figures == "yes" ] ; then
     matlab -nodesktop -nosplash < $PROTDIR/matlab/analize_tau_protocol.m
-fi
+fi 
+
