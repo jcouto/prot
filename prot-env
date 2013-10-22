@@ -4,7 +4,8 @@
 #       Source this file in .bashrc to have the variables available.
 #
 
-export prot_setup="HEKA-EPC10"
+#export prot_setup="HEKA-EPC10"
+export prot_setup="AXON-200B"
 
 if [ $prot_setup == "HEKA-EPC10" ] ; then 
 	# Conversion factors (HEKA setups)))
@@ -16,6 +17,17 @@ if [ $prot_setup == "HEKA-EPC10" ] ; then
 	prot_vc_out_units="mV"
 	prot_cc_in_units="mV"
 	prot_cc_out_units="pA"
+elif [ $prot_setup == "AXON-200B" ] ; then 
+	# Conversion factors (AXON setups)))
+	prot_vc_in_factor=400 
+	prot_vc_out_factor=0.05
+	prot_cc_in_factor=20
+	prot_cc_out_factor="0.00025"
+	prot_vc_in_units="pA"
+	prot_vc_out_units="mV"
+	prot_cc_in_units="mV"
+	prot_cc_out_units="pA"
+	
 fi
 
 function prot_set_headstage {
@@ -28,6 +40,11 @@ function prot_set_headstage {
 		prot_cc_in=(0 1);
 		prot_cc_out=(0 1);
 		prot_vc_in=(2 3);
+		prot_vc_out=(0 1);
+	elif [ $prot_setup == "AXON-200B" ] ; then 
+		prot_cc_in=(0 1);
+		prot_cc_out=(0 1);
+		prot_vc_in=(0 1);
 		prot_vc_out=(0 1);
 	fi
 	if [ $protocol == 'vc' ]; then
