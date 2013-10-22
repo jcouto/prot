@@ -6,14 +6,15 @@
 # Default parameters.
 FOLDERNAMES=(tau steps eif)
 FILENAME="experiment.txt"
+FILENAME_CP=".experiment"
 AGE="NA"
 PIPETTE[0]="NA"
 CFAST[0]="NA"
 BRIDGE[0]="AEC"
 CELLS[0]="PC"
-BRAIN_AREA="Somatosensory"
+BRAIN_AREA="Cerebellum_Vermis"
 AUTHOR=`getent passwd $USER | cut -d ':' -f 5| cut -d ',' -f 1`
-PROJECT="meridian"
+PROJECT="pkj_sin"
 AMPLIFIER="AXON_200B"
 
 usage()
@@ -51,16 +52,16 @@ make_subfolders()
 }
 write_info_file()
 {
-    echo "date = "`date` > $FILENAME
-    echo "author = "$AUTHOR > $FILENAME
-    echo "project = "$PROJECT >> $FILENAME
-    echo "cell_type = "$1 >> $FILENAME
-    echo "pipette_resistance = "$2 >> $FILENAME
-    echo "bridge_balance = "$3 >> $FILENAME
-    echo "cap_compensation = "$4 >> $FILENAME
-    echo "brain_area = "$BRAIN_AREA >> $FILENAME
-    echo "age = "$AGE >> $FILENAME
-    echo "amplifier = "$AMPLIFIER >> $FILENAME
+    echo "date = "`date` > $5
+    echo "author = "$AUTHOR > $5
+    echo "project = "$PROJECT >> $5
+    echo "cell_type = "$1 >> $5
+    echo "pipette_resistance = "$2 >> $5
+    echo "bridge_balance = "$3 >> $5
+    echo "cap_compensation = "$4 >> $5
+    echo "brain_area = "$BRAIN_AREA >> $5
+    echo "age = "$AGE >> $5
+    echo "amplifier = "$AMPLIFIER >> $5
 }
 
 # Find out the name of the directory.
@@ -143,7 +144,8 @@ then
         cd $folder
         echo
         echo +++++++++++ $folder +++++++++++ 
-        write_info_file ${CELLS[$i]} ${PIPETTE[$i]} ${BRIDGE[$i]} ${CFAST[$i]} 
+        write_info_file ${CELLS[$i]} ${PIPETTE[$i]} ${BRIDGE[$i]} ${CFAST[$i]} $FILENAME
+        write_info_file ${CELLS[$i]} ${PIPETTE[$i]} ${BRIDGE[$i]} ${CFAST[$i]} $FILENAME_CP
         cat $FILENAME
         make_subfolders
         cd ../../
@@ -153,7 +155,8 @@ else
     mkdir -p $folder
     cd $folder
     echo +++++++++++ $folder +++++++++++ 
-    write_info_file ${CELLS[0]} ${PIPETTE[0]} ${BRIDGE[0]} ${CFAST[0]} 
+    write_info_file ${CELLS[0]} ${PIPETTE[0]} ${BRIDGE[0]} ${CFAST[0]} $FILENAME
+    write_info_file ${CELLS[0]} ${PIPETTE[0]} ${BRIDGE[0]} ${CFAST[0]} $FILENAME_CP
     cat $FILENAME
     make_subfolders
 fi
