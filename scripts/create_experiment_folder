@@ -15,7 +15,7 @@ CELLS[0]="PC"
 BRAIN_AREA="Cerebellum_Vermis"
 AUTHOR=`getent passwd $USER | cut -d ':' -f 5| cut -d ',' -f 1`
 PROJECT="pkj_sin"
-AMPLIFIER="AXON_200B"
+AMPLIFIER=$prot_setup
 
 usage()
 {

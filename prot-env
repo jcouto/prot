@@ -4,8 +4,8 @@
 #       Source this file in .bashrc to have the variables available.
 #
 
-#export prot_setup="HEKA-EPC10"
-export prot_setup="AXON-200B"
+export prot_setup="HEKA-EPC10"
+#export prot_setup="AXON-200B"
 
 if [ $prot_setup == "HEKA-EPC10" ] ; then 
 	# Conversion factors (HEKA setups)))
