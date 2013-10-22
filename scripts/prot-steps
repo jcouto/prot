@@ -18,15 +18,15 @@ to charactherize passive and active input-output relations.\n
 \n
     Options:\n
         \t-a start,stop,step      Amplitude of the steps.\n
-        \t   ($step_amp pA)       Specify the start, stop and step values.\n
+        \t   ($amp pA)       Specify the start, stop and step values.\n
         \t-d duration             Duration of the step.\n
-        \t  ($step_dur sec)\n         
+        \t  ($dur sec)\n         
         \t-t tail                 Duration before and after the step.\n
-        \t  ($step_tail sec)\n
+        \t  ($T sec)\n
         \t-i interval             Interval to wait between trials.\n
-        \t  ($step_i sec)\n
+        \t  ($i sec)\n
         \t-n repetitions          Number of repetitions of each trial.\n
-        \t  ($step_n)\n
+        \t  ($n)\n
         \t-H headstage            Headstage to use.\n
         \t  ($headstage)\n
         \t-h,--help               Display this help message and quit.\n

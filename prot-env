@@ -63,7 +63,7 @@ export prot_vc_out_units
 export prot_kernel="yes"
 export prot_prot="yes"
 export prot_figures="yes"
-
+export prot_kernel_sd=150
 # Default sampling rate
 export prot_srate=30000
 

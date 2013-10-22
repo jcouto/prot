@@ -4,7 +4,6 @@
 fprintf(1,'\nAnalizing data...\n')
 addpath(getenv('MATLABLIBDIR'))
 
-disp('Ops... not ready yet...')
-%process_tau_folder
+process_tau_folder
 
 quit
