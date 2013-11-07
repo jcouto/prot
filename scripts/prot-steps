@@ -7,6 +7,7 @@ dur=1
 T=1
 n=2
 i=5
+offset=0
 kernel=$prot_kernel
 prot=$prot_prot
 figures=$prot_figures
@@ -23,23 +24,25 @@ to charactherize passive and active input-output relations.\n
         \t  ($dur sec)\n         
         \t-t tail                 Duration before and after the step.\n
         \t  ($T sec)\n
+        \t-o offset               Offset when outputing using both headstages.\n
+        \t  ($offset sec)\n
         \t-i interval             Interval to wait between trials.\n
         \t  ($i sec)\n
         \t-n repetitions          Number of repetitions of each trial.\n
         \t  ($n)\n
-        \t-H headstage            Headstage to use.\n
+        \t-H headstage            Headstage to use. (0,1,both)\n
         \t  ($headstage)\n
         \t-h,--help               Display this help message and quit.\n
         \t--(no-)kernel			  (Does not) compute the kernel\n
         \t--(no-)prot             (Does not) run the steps\n
         \t--(no-)figures          (Does not) analyze the data\n
-    
+        \t 
     Examples:\n
         \tRun 800ms long steps from -500 to 1500 pA with 100pA intervals on headstage 2 \n
         \t\t  prot-steps -a -500,1500,100 -n 1 -d 0.8 -H 2\n
 
 "
-if ! options=$(getopt -o ha:d:t:i:n:H: --long no-kernel,kernel,no-prot,prot,no-figures,figures -- "$@")
+if ! options=$(getopt -o ha:d:t:i:o:n:H: --long no-kernel,kernel,no-prot,prot,no-figures,figures -- "$@")
 then
     echo -e $usage
     exit 1
@@ -72,17 +75,41 @@ do
     shift
 done
 
-prot_set_headstage $headstage "cc"
+if [ $headstage == "both" ]
+then
+    for i in `seq 0 1`; do
+        prot_set_headstage $i "cc"
+        ai[$i]=$AI_CHANNEL
+        ao[$i]=$AO_CHANNEL
+        aiunits[$i]=$INPUT_UNITS
+        aounits[$i]=$OUTPUT_UNITS
+        aifactors[$i]=$AI_CONVERSION_FACTOR
+        aofactors[$i]=$AO_CONVERSION_FACTOR
+    done
+    SAVE_IFS=$IFS
+    IFS=","
+    if [ $kernel == "yes" ] ; then
+        kernel=""
+    else
+        kernel="--no-kernel"
+    fi
+    echo "lcg-stimgen DC --P1 $amp -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[*]}  --Iu ${aiunits[*]} --Ou ${aounits[*]} --If ${aifactors[*]} --Of ${aofactors[*]} -o $offset -Ks $prot_kernel_sd"
+    eval "lcg-stimgen DC --P1 $amp -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[*]}  --Iu ${aiunits[*]} --Ou ${aounits[*]} --If ${aifactors[*]} --Of ${aofactors[*]} -o $offset -Ks $prot_kernel_sd"
+    IFS=$SAVE_IFS
+else
+    prot_set_headstage $headstage "cc"
 
-if [ $kernel == "yes" ] ; then
-	lcg-kernel -s $prot_kernel_sd -I $AI_CHANNEL -O $AO_CHANNEL -F $prot_srate
+    if [ $kernel == "yes" ] ; then
+	    lcg-kernel -s $prot_kernel_sd -I $AI_CHANNEL -O $AO_CHANNEL -F $prot_srate
+    fi
+
+    if [ $prot == "yes" ] ; then
+        lcg-steps -a $amp -d $dur -t $T \
+            -i $i -n $n -F $prot_srate --no-kernel
+    fi
+
+    if [ $figures == "yes" ] ; then
+        matlab -nodesktop -nosplash < $PROTDIR/matlab/analize_steps_protocol.m
+    fi
 fi
 
-if [ $prot == "yes" ] ; then
-    lcg-steps -a $amp -d $dur -t $T \
-        -i $i -n $n -F $prot_srate --no-kernel
-fi
-
-if [ $figures == "yes" ] ; then
-    matlab -nodesktop -nosplash < $PROTDIR/matlab/analize_steps_protocol.m
-fi

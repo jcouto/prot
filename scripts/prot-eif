@@ -1,18 +1,22 @@
 #! /usr/bin/env bash
 #
-# Protocol to inject noise and to characterize the dynamic IV curves.
+# Protocol to inject noise to characterize the dIV curves.
 #
-amp=200,0
-sd="75,75"
-tau="3,10"
+amp=30
+sd=150
+tau=4
+
 dur=40
+
 T=1
-n=3
-i=10
+n=2
+i=5
+
+offset=20
 kernel=$prot_kernel
 prot=$prot_prot
 figures=$prot_figures
-headstage=0
+headstage="both"
 
 usage="EIF protocol. Injects current noise in cell \n
 to charactherize the dynamic IV curve. Sums 2 waveforms...\n
@@ -39,13 +43,11 @@ to charactherize the dynamic IV curve. Sums 2 waveforms...\n
         \t--(no-)kernel			  (Does not) compute the kernel\n
         \t--(no-)prot             (Does not) run the steps\n
         \t--(no-)figures          (Does not) analyze the data\n
-    
+        \t 
     Examples:\n
-        \tRun 800ms long steps from -500 to 1500 pA with 100pA intervals on headstage 2 \n
-        \t\t  prot-steps -a -500,1500,100 -n 1 -d 0.8 -H 2\n
 
 "
-if ! options=$(getopt -o ha:d:T:s:t:i:n:H: --long no-kernel,kernel,no-prot,prot,no-figures,figures -- "$@")
+if ! options=$(getopt -o ha:d:t:T:struct:i:o:n:H: --long no-kernel,kernel,no-prot,prot,no-figures,figures -- "$@")
 then
     echo -e $usage
     exit 1
@@ -66,10 +68,10 @@ do
     --figures) figures="yes" ;;
     # for options with required arguments, an additional shift is required
     -a) amp=$2 ; shift;;
-    -d) dur=$2 ; shift;;
-    -t) T=$2 ; shift;;
     -s) sd=$2 ; shift;;
     -T) tau=$2 ; shift;;
+    -d) dur=$2 ; shift;;
+    -t) T=$2 ; shift;;
     -i) i=$2 ; shift;;
     -n) n=$2 ; shift;;
     -H) headstage=$2 ; shift;;
@@ -80,18 +82,41 @@ do
     shift
 done
 
-prot_set_headstage $headstage "cc"
+if [ $headstage == "both" ]
+then
+    for i in `seq 0 1`; do
+        prot_set_headstage $i "cc"
+        ai[$i]=$AI_CHANNEL
+        ao[$i]=$AO_CHANNEL
+        aiunits[$i]=$INPUT_UNITS
+        aounits[$i]=$OUTPUT_UNITS
+        aifactors[$i]=$AI_CONVERSION_FACTOR
+        aofactors[$i]=$AO_CONVERSION_FACTOR
+    done
+    SAVE_IFS=$IFS
+    IFS=","
+    if [ $kernel == "yes" ] ; then
+        kernel=""
+    else
+        kernel="--no-kernel"
+    fi
+    echo "lcg-stimgen DC --P1 $amp -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[*]}  --Iu ${aiunits[*]} --Ou ${aounits[*]} --If ${aifactors[*]} --Of ${aofactors[*]} -o $offset -Ks $prot_kernel_sd" 
+    eval "lcg-stimgen DC --P1 $amp -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[*]}  --Iu ${aiunits[*]} --Ou ${aounits[*]} --If ${aifactors[*]} --Of ${aofactors[*]} -o $offset -Ks $prot_kernel_sd" 
+    IFS=$SAVE_IFS
+else
+    prot_set_headstage $headstage "cc"
 
-if [ $kernel == "yes" ] ; then
-	lcg-kernel -s $prot_kernel_sd -I $AI_CHANNEL -O $AO_CHANNEL -F $prot_srate
-fi
+    if [ $kernel == "yes" ] ; then
+	    lcg-kernel -s $prot_kernel_sd -I $AI_CHANNEL -O $AO_CHANNEL -F $prot_srate
+    fi
 
-if [ $prot == "yes" ] ; then
+    if [ $prot == "yes" ] ; then
 	
-	lcg-ou -m $amp -s $sd -t $tau -d $dur -D $T \
-        -i $i -n $n -F $prot_srate --no-kernel
-fi
+	    lcg-ou -m $amp -s $sd -t $tau -d $dur -D $T \
+            -i $i -n $n -F $prot_srate --no-kernel
+    fi
 
-if [ $figures == "yes" ] ; then
-    matlab -nodesktop -nosplash < $PROTDIR/matlab/analize_eif_protocol.m
+    if [ $figures == "yes" ] ; then
+        matlab -nodesktop -nosplash < $PROTDIR/matlab/analize_eif_protocol.m
+    fi
 fi

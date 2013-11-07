@@ -3,19 +3,19 @@
 # Protocol to inject short pulses to characterize the membrane time constant.
 #
 amp=-300
-dur=10
-n=30
+dur=60
+n=1
 i=1
-pw=10
-T=0.5
-freq=0.7
+pw=1000
+T=1
+freq=0.5
 kernel=$prot_kernel
 prot=$prot_prot
 figures=$prot_figures
-headstage=0
+headstage="0,1"
 offset=0
 
-usage="Tau protocol. Injects current pulses in a cell \n
+usage="Dual cell pulses protocol. Injects current pulses in a cell \n
 to charactherize its time constant.\n
     Usage : `basename $0` [options <value>]\n
 \n
@@ -74,41 +74,26 @@ do
     shift
 done
 
-
-if [ $headstage == "both" ]
-then
-    for i in `seq 0 1`; do
-        prot_set_headstage $i "cc"
-        ai[$i]=$AI_CHANNEL
-        ao[$i]=$AO_CHANNEL
-        aiunits[$i]=$INPUT_UNITS
-        aounits[$i]=$OUTPUT_UNITS
-        aifactors[$i]=$AI_CONVERSION_FACTOR
-        aofactors[$i]=$AO_CONVERSION_FACTOR
-    done
-    SAVE_IFS=$IFS
-    IFS=","
-    if [ $kernel == "yes" ] ; then
-        kernel=""
-    else
-        kernel="--no-kernel"
-    fi
-    echo "lcg-stimgen poisson-reg --P1 $amp --P2 $freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[*]}  --Iu ${aiunits[*]} --Ou ${aounits[*]} --If ${aifactors[*]} --Of ${aofactors[*]} -o $offset -Ks $prot_kernel_sd"
-    eval "lcg-stimgen poisson-reg --P1 $amp --P2 $freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[*]}  --Iu ${aiunits[*]} --Ou ${aounits[*]} --If ${aifactors[*]} --Of ${aofactors[*]} -o $offset -Ks $prot_kernel_sd"
-    IFS=$SAVE_IFS
+SAVE_IFS=$IFS
+IFS=','
+j=0
+order=(cc vc)
+for i in $headstage
+do
+        prot_set_headstage $i ${order[$j]}
+        ai[$j]=$AI_CHANNEL
+        ao[$j]=$AO_CHANNEL
+        aiunits[$j]=$INPUT_UNITS
+        aounits[$j]=$OUTPUT_UNITS
+        aifactors[$j]=$AI_CONVERSION_FACTOR
+        aofactors[$j]=$AO_CONVERSION_FACTOR
+    ((j++))
+done
+if [ $kernel == "yes" ] ; then
+    kernel=""
 else
-    prot_set_headstage $headstage "cc"
-
-    if [ $kernel == "yes" ] ; then
-	    lcg-kernel -s $prot_kernel_sd -I $AI_CHANNEL -O $AO_CHANNEL -F $prot_srate
-    fi
-
-    if [ $prot == "yes" ] ; then
-        lcg-tau -a $amp -d $dur \
-            -i $i -n $n -F $prot_srate --no-kernel
-    fi
-
-    if [ $figures == "yes" ] ; then
-        matlab -nodesktop -nosplash < $PROTDIR/matlab/analize_tau_protocol.m
-    fi 
+    kernel="--no-kernel"
 fi
+    echo "lcg-stimgen poisson-reg --P1 $amp --P2 $freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[0]}  --Iu ${aiunits[*]} --Ou ${aounits[0]} --If ${aifactors[*]} --Of ${aofactors[0]} -o $offset -Ks $prot_kernel_sd" 
+    eval "lcg-stimgen poisson-reg --P1 $amp --P2 $freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[0]}  --Iu ${aiunits[*]} --Ou ${aounits[0]} --If ${aifactors[*]} --Of ${aofactors[0]} -o $offset -Ks $prot_kernel_sd" 
+IFS=$SAVE_IFS
