@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+#
+# Script to export variables from the setup.
+# Takes 2 inputs: the headstage (0,1,...) and the mode (CC,VC)
+# There are no default options and no safety checks.
+#
+
+headstage=$1
+mode=${2,,}
+
+
+#echo Changing $prot_setup to headstage $headstage in ${mode^^} mode.
+# Retrieve information from setups.info file.
+
+SECTION=$prot_setup
+
+# Parse configuration file: inspired in a script by Alexandre de Dommelin
+eval `sed -e 's/[[:space:]]*\=[[:space:]]*/=/g' \
+         -e 's/;.*$//' \
+         -e 's/[[:space:]]*$//' \
+         -e 's/^[[:space:]]*//' \
+         -e "s/^\(.*\)=\([^\"']*\)$/\1=\"\2\"/" \
+         < $setups_cfg \
+         | sed -n -e "/^\[$SECTION\]/,/^\s*\[/{/^[^;].*\=.*/p;}"`
+
+# extract the correct channel.
+OIFS=$IFS
+IFS=','
+tmp="input_channel_$mode"
+input_channels=(${!tmp})
+
+tmp="output_channel_$mode"
+output_channels=(${!tmp})
+IFS=$OIFS
+tmp=("input_factor_$mode" "output_factor_$mode" "input_units_$mode" "output_units_$mode")
+i=0
+for var in ${tmp[*]}; do
+    params[i]=${!var}
+    ((i++))
+done
+echo ${input_channels[$headstage]} ${output_channels[$headstage]} ${params[*]}

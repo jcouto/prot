@@ -100,8 +100,8 @@ then
     else
         kernel="--no-kernel"
     fi
-    echo "lcg-stimgen DC --P1 $amp -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[*]}  --Iu ${aiunits[*]} --Ou ${aounits[*]} --If ${aifactors[*]} --Of ${aofactors[*]} -o $offset -Ks $prot_kernel_sd" 
-    eval "lcg-stimgen DC --P1 $amp -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[*]}  --Iu ${aiunits[*]} --Ou ${aounits[*]} --If ${aifactors[*]} --Of ${aofactors[*]} -o $offset -Ks $prot_kernel_sd" 
+    echo "lcg-stimgen DC --P1 $amp -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[*]}  --Iu ${aiunits[*]} --Ou ${aounits[*]} --If ${aifactors[*]} --Of ${aofactors[*]} -o $offset --Ks $prot_kernel_sd" 
+    eval "lcg-stimgen DC --P1 $amp -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[*]}  --Iu ${aiunits[*]} --Ou ${aounits[*]} --If ${aifactors[*]} --Of ${aofactors[*]} -o $offset --Ks $prot_kernel_sd" 
     IFS=$SAVE_IFS
 else
     prot_set_headstage $headstage "cc"
