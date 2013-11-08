@@ -1,0 +1,145 @@
+#!/usr/bin/env python
+import os
+import sys
+import getopt
+import lcg
+import subprocess as sub
+import numpy as np
+import lcg
+import time
+import glob
+
+description = '''
+Measures the pipete or membrane resistance in 
+voltage clamp or current clamp mode.
+Note: this script does not take over the amplifier.
+    Options:
+        - n: Number of pulses (30)
+        - f: Frequency of the pulses (10Hz)
+        - m: Mode (vc,cc)
+        - a: Amplitude of the pulses (5mV)
+        - d: Duration of the pulses (5ms)
+'''
+usage = description
+default_options = {'npulses': 30,
+                   'freq': 10,
+                   'amp': 5,
+                   'dur':5,
+                   'mode': 'VC',
+                   'headstage':0,
+                   'srate':20000,
+                   'plot':False}
+
+def parse_options():
+    options = default_options.copy()
+    try:
+        opts,args = getopt.getopt(sys.argv[1:], 'hH:n:a:d:f:m:', ['help','plot'])
+    except getopt.GetoptError, err:
+        print usage
+        print(str(err))
+        sys.exit(1)
+    for o,a in opts:
+        if o in ['--help','-h','help']:
+            print usage
+            sys.exit(1)
+        if o == '-n':
+            options['npulses'] = int(a)
+        if o == '-a':
+            options['amp'] = float(a)
+        if o == '-d':
+            options['dur'] = float(a)
+        if o == '-f':
+            options['freq'] = float(a)
+        if o == '-m':
+            options['mode'] = a
+        if o == '-H':
+            options['headstage'] = int(a)
+        if o == '--plot':
+            options['plot'] = True
+    return options
+
+def get_headstage_params(headstage,mode):
+    '''
+    Returns [input_channel, output_channel,
+    input_factor, output_factor,
+    input_units,output_units]
+    '''
+    process = sub.Popen(['prot_return_lcg_cfg',
+                         '{0}'.format(headstage),
+                         '{0}'.format(mode)],stdout=sub.PIPE)
+    stdout,stderr = process.communicate()
+    return stdout.rstrip().split(' ')
+    
+def main():
+    opts = parse_options()
+    run = lambda p:sub.call(p,shell=True)
+    #run = lambda cmd: sys.stdout.write(cmd + '\n')
+    param = get_headstage_params(opts['headstage'],opts['mode'])
+    oldfiles = glob.glob('*.h5')
+    oldfiles = np.sort(oldfiles)
+
+    run('lcg-stimgen poisson-reg --P1'
+          ' {0} --P2 {1} --P3 {2} -t 0.1 -F {3} -I {4}'
+          ' -O {5} --If {6} --Of {7} --Iu'
+          ' {8} --Ou {9} -V 4 --no-kernel'.format(opts['amp'],
+                                             -opts['freq'],
+                                             opts['dur'],
+                                             opts['srate'],
+                                             *param))
+
+    files = glob.glob('*.h5')
+    files = np.sort(files)
+    if not files[-1] in oldfiles:
+        ent,info = lcg.loadH5Trace(files[-1])
+        # Extract voltage traces
+        tmp = np.where(ent[0]['data']== 0)[0]
+        idx = tmp[np.where(np.diff(tmp)>1)[0]]
+        N = (np.arange(int(-2*1e-3*opts['srate']),int((opts['dur']+2)*1e-3*opts['srate'])))
+        t = np.linspace(-2,opts['dur']+2,len(N))
+        trace = np.zeros(shape=(len(N),len(idx)))
+        stim = np.zeros(shape=(len(N),len(idx)))
+        for i,k in enumerate(idx):
+            trace[:,i] = ent[1]['data'][k+N]
+            stim[:,i] = ent[0]['data'][k+N]
+        meanTrace = np.mean(trace,axis=1)
+        meanStim = np.mean(stim,axis=1)
+        # Calculate pipete resistance
+        idx0 = (t<0)
+        idx1 = (t>opts['dur']-1)& (t<opts['dur'])
+        if opts['mode'].lower() == 'cc':
+            V = np.mean(meanTrace[idx1]) - np.mean(meanTrace[idx0])
+            I = np.mean(meanStim[idx1]) - np.mean(meanStim[idx0])
+            plt.ylabel('Voltage (mV)')
+        else:
+            I = np.mean(meanTrace[idx1]) - np.mean(meanTrace[idx0])
+            V = np.mean(meanStim[idx1]) - np.mean(meanStim[idx0])
+        print('Resistance is: {0:.2f}MOhm.'.format((V)/(I*1e-3)))
+        # Remove files
+        os.remove(files[-1])
+        if opts['plot']:
+            import pylab as plt
+            fig = plt.figure()
+            ax0 = fig.add_subplot(211)
+            ax1 = fig.add_subplot(212)
+            ax0.plot(t,trace,'k')
+            ax0.plot(t,meanTrace,'r')
+            ax1.plot(t,meanStim,'b')
+            ax0.set_xlabel('time (ms)')
+            ax1.set_xlabel('time (ms)')
+            if opts['mode'].lower() == 'cc':
+                ax0.set_ylabel('Voltage (mV)')
+                ax1.set_ylabel('Current (pA)')
+            else:
+                ax0.set_ylabel('Current (pA)')
+                ax1.set_ylabel('Voltage (mV)')
+            for ax in [ax0,ax1]:
+                ax.spines["right"].set_visible(False)
+                ax.spines["top"].set_visible(False)
+                ax.get_xaxis().tick_bottom()
+                ax.get_yaxis().tick_left()
+                #ax.axis.set_tick_params(direction='out')
+            plt.show()
+if __name__ in ['__main__']:
+    main()
+
+
