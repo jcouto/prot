@@ -7,7 +7,7 @@
 export prot_setup="HEKA-EPC10"
 #export prot_setup="AXON-700B"
 
-prot_set_lcg_var() {
+function prot_set_lcg_var {
     tmp=(`prot_return_lcg_cfg $1 $2`)
 ## Sets lcg enviromental variables given the headstage and the protocol. 
     export AI_CHANNEL=${tmp[0]}
@@ -17,7 +17,7 @@ prot_set_lcg_var() {
 	export INPUT_UNITS=${tmp[4]}
 	export OUTPUT_UNITS=${tmp[5]}
 }
-export -f prot_export_lcg_var
+export -f prot_set_lcg_var
 # Default parameters for the protocols
 export prot_kernel="yes"
 export prot_prot="yes"
