@@ -77,7 +77,8 @@ def main():
     param = get_headstage_params(opts['headstage'],opts['mode'])
     oldfiles = glob.glob('*.h5')
     oldfiles = np.sort(oldfiles)
-
+    current_directory = os.getcwd()
+    os.chdir('/tmp')
     run('lcg-stimgen poisson-reg --P1'
           ' {0} --P2 {1} --P3 {2} -t 0.1 -F {3} -I {4}'
           ' -O {5} --If {6} --Of {7} --Iu'
@@ -139,6 +140,7 @@ def main():
                 ax.get_yaxis().tick_left()
                 #ax.axis.set_tick_params(direction='out')
             plt.show()
+    os.chdir(current_directory)
 if __name__ in ['__main__']:
     main()
 

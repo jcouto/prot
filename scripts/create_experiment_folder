@@ -153,6 +153,7 @@ then
             make_subfolders
             cd ../../
         done
+	fi
 else
     folder="$directory"
     mkdir -p $folder
@@ -169,3 +170,4 @@ fi
 echo 
 echo ++++++++++++++++++++++++++++++ 
 echo Created directory tree in $directory
+
