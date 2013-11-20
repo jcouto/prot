@@ -47,7 +47,7 @@ to charactherize the dynamic IV curve. Sums 2 waveforms...\n
     Examples:\n
 
 "
-if ! options=$(getopt -o ha:d:t:T:struct:i:o:n:H: --long no-kernel,kernel,no-prot,prot,no-figures,figures -- "$@")
+if ! options=$(getopt -o ha:d:o:t:T:struct:i:o:n:H: --long no-kernel,kernel,no-prot,prot,no-figures,figures -- "$@")
 then
     echo -e $usage
     exit 1
@@ -71,6 +71,7 @@ do
     -s) sd=$2 ; shift;;
     -T) tau=$2 ; shift;;
     -d) dur=$2 ; shift;;
+    -o) offset=$2 ; shift;;
     -t) T=$2 ; shift;;
     -i) i=$2 ; shift;;
     -n) n=$2 ; shift;;
@@ -85,7 +86,7 @@ done
 if [ $headstage == "both" ]
 then
     for i in `seq 0 1`; do
-        prot_set_headstage $i "cc"
+        prot_set_lcg_var $i "cc"
         ai[$i]=$AI_CHANNEL
         ao[$i]=$AO_CHANNEL
         aiunits[$i]=$INPUT_UNITS
@@ -104,7 +105,7 @@ then
     eval "lcg-stimgen DC --P1 $amp -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[*]}  --Iu ${aiunits[*]} --Ou ${aounits[*]} --If ${aifactors[*]} --Of ${aofactors[*]} -o $offset --Ks $prot_kernel_sd" 
     IFS=$SAVE_IFS
 else
-    prot_set_headstage $headstage "cc"
+    prot_set_lcg_var $headstage "cc"
 
     if [ $kernel == "yes" ] ; then
 	    lcg-kernel -s $prot_kernel_sd -I $AI_CHANNEL -O $AO_CHANNEL -F $prot_srate

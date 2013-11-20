@@ -40,7 +40,7 @@ to charactherize its time constant.\n
         \t\t  prot-tau -a --300 -n 1 -d 10 -H 2\n
 
 "
-if ! options=$(getopt -o ha:f:p:d:i:n:H: --long no-kernel,kernel,no-prot,prot,no-figures,figures -- "$@")
+if ! options=$(getopt -o ha:f:o:p:d:i:n:H: --long no-kernel,kernel,no-prot,prot,no-figures,figures -- "$@")
 then
     echo -e $usage
     exit 1
@@ -63,6 +63,7 @@ do
     -a) amp=$2 ; shift;;
     -d) dur=$2 ; shift;;
     -p) pw=$2 ; shift;;
+    -o) offset=$2 ; shift;;
     -f) freq=$2 ; shift;;
     -i) i=$2 ; shift;;
     -n) n=$2 ; shift;;
@@ -77,10 +78,21 @@ done
 SAVE_IFS=$IFS
 IFS=','
 j=0
-order=(cc vc)
+
 for i in $headstage
 do
-        prot_set_headstage $i ${order[$j]}
+    HH[j]=$i
+((j++))
+done
+
+
+IFS=$SAVE_IFS
+j=0
+order=(cc vc)
+for i in ${HH[@]}
+do
+        echo $i ${order[$j]}
+        prot_set_lcg_var $i ${order[$j]}
         ai[$j]=$AI_CHANNEL
         ao[$j]=$AO_CHANNEL
         aiunits[$j]=$INPUT_UNITS
@@ -89,11 +101,12 @@ do
         aofactors[$j]=$AO_CONVERSION_FACTOR
     ((j++))
 done
+IFS=","
 if [ $kernel == "yes" ] ; then
     kernel=""
 else
     kernel="--no-kernel"
 fi
-    echo "lcg-stimgen poisson-reg --P1 $amp --P2 $freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[0]}  --Iu ${aiunits[*]} --Ou ${aounits[0]} --If ${aifactors[*]} --Of ${aofactors[0]} -o $offset --Ks $prot_kernel_sd" 
-    eval "lcg-stimgen poisson-reg --P1 $amp --P2 $freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[0]}  --Iu ${aiunits[*]} --Ou ${aounits[0]} --If ${aifactors[*]} --Of ${aofactors[0]} -o $offset --Ks $prot_kernel_sd" 
+    echo "lcg-stimgen poisson-reg --P1 $amp --P2 $freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[0]}  --Iu ${aiunits[*]} --Ou ${aounits[0]} --If ${aifactors[*]} --Of ${aofactors[0]} -o $offset --Ks $prot_kernel_sd" $kernel
+    eval "lcg-stimgen poisson-reg --P1 $amp --P2 $freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[0]}  --Iu ${aiunits[*]} --Ou ${aounits[0]} --If ${aifactors[*]} --Of ${aofactors[0]} -o $offset --Ks $prot_kernel_sd" $kernel 
 IFS=$SAVE_IFS

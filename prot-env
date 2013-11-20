@@ -4,8 +4,8 @@
 #       Source this file in .bashrc to have the variables available.
 #
 
-#export prot_setup="HEKA-EPC10"
-export prot_setup="AXON-700B"
+export prot_setup="HEKA-EPC10"
+#export prot_setup="AXON-700B"
 
 function prot_set_lcg_var {
     tmp=(`prot_return_lcg_cfg $1 $2`)

@@ -4,7 +4,7 @@
 # Appends also an info file and goes inside the first directory
 
 # Default parameters.
-FOLDERNAMES=(tau steps eif)
+FOLDERNAMES=(tau steps eif 2cell)
 FILENAME="experiment.txt"
 FILENAME_CP=".experiment"
 AGE="NA"
@@ -118,10 +118,11 @@ done
 set +f; unset IFS
 
 # Are there multiple cells?
-simultaneous="no"
+simultaneous="yes"
+created="no"
 if [[ ${#CELLS[@]} -ge 2 ]]
 then
-    if [ $simultaneous -eq "no" ]
+    if [ $simultaneous == "no" ]
     then
         for ((i=0; i < ${#CELLS[@]} ; i++))
         do
@@ -152,19 +153,52 @@ then
             cat $FILENAME
             make_subfolders
             cd ../../
+            created="yes"
         done
 	fi
-else
+fi
+if [ $created == "no" ]
+then
     folder="$directory"
     mkdir -p $folder
     cd $folder
-    SAVE_IFS=$IFS
-    IFS=","
     echo +++++++++++ $folder +++++++++++ 
-    write_info_file ${CELLS[*]} ${PIPETTE[*]} ${BRIDGE[*]} ${CFAST[*]} $FILENAME
-    write_info_file ${CELLS[*]} ${PIPETTE[*]} ${BRIDGE[*]} ${CFAST[*]} $FILENAME_CP
+    C=""
+    P=""
+    B=""
+    F=""
+    for i in ${!CELLS[@]};do
+    if [ $i -eq 0 ]; then
+        C="${CELLS[$i]}"
+    else
+        C="$C,${CELLS[$i]}"
+    fi
+    done
+    for i in ${!PIPETTE[@]};do
+    if [ $i -eq 0 ]; then
+        P="${PIPETTE[$i]}"
+    else
+        P="$P,${PIPETTE[$i]}"
+    fi
+    done
+    for i in ${!BRIDGE[@]};do
+    if [ $i -eq 0 ]; then
+        B="${BRIDGE[$i]}"
+    else
+        B="$B,${BRIDGE[$i]}"
+    fi
+    done
+    for i in ${!CFAST[@]};do
+    if [ $i -eq 0 ]; then
+        F="${CFAST[$i]}"
+    else
+        F="$F,${CFAST[$i]}"
+    fi
+    done
+
+    write_info_file $C $P $B $F $FILENAME
+    write_info_file $C $P $B $F $FILENAME_CP
     cat $FILENAME
-    IFS=$SAVE_IFS
     make_subfolders
 fi
 echo 
