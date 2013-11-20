@@ -22,7 +22,9 @@ to charactherize its time constant.\n
     Options:\n
         \t-a amplitude		      Amplitude of the steps.\n
         \t   ($amp pA)       \n
-        \t-d duration             Duration of the pulse (ms).\n
+        \t-d duration             Duration recording (ms).\n
+        \t  ($dur ms)\n         
+        \t-p pulse-width             Duration of the pulse (ms).\n
         \t  ($dur ms)\n         
         \t-i interval             Interval to wait between trials.\n
         \t  ($i sec)\n
@@ -107,6 +109,6 @@ if [ $kernel == "yes" ] ; then
 else
     kernel="--no-kernel"
 fi
-    echo "lcg-stimgen poisson-reg --P1 $amp --P2 $freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[0]}  --Iu ${aiunits[*]} --Ou ${aounits[0]} --If ${aifactors[*]} --Of ${aofactors[0]} -o $offset --Ks $prot_kernel_sd" $kernel
-    eval "lcg-stimgen poisson-reg --P1 $amp --P2 $freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[0]}  --Iu ${aiunits[*]} --Ou ${aounits[0]} --If ${aifactors[*]} --Of ${aofactors[0]} -o $offset --Ks $prot_kernel_sd" $kernel 
+    echo "lcg-stimgen poisson-reg --P1 $amp --P2 -$freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[0]}  --Iu ${aiunits[*]} --Ou ${aounits[0]} --If ${aifactors[*]} --Of ${aofactors[0]} -o $offset --Ks $prot_kernel_sd" $kernel
+    eval "lcg-stimgen poisson-reg --P1 $amp --P2 -$freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[0]}  --Iu ${aiunits[*]} --Ou ${aounits[0]} --If ${aifactors[*]} --Of ${aofactors[0]} -o $offset --Ks $prot_kernel_sd" $kernel
 IFS=$SAVE_IFS

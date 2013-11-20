@@ -94,8 +94,8 @@ then
     else
         kernel="--no-kernel"
     fi
-    echo "lcg-stimgen poisson-reg --P1 $amp --P2 $freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[*]}  --Iu ${aiunits[*]} --Ou ${aounits[*]} --If ${aifactors[*]} --Of ${aofactors[*]} -o $offset --Ks $prot_kernel_sd"
-    eval "lcg-stimgen poisson-reg --P1 $amp --P2 $freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[*]}  --Iu ${aiunits[*]} --Ou ${aounits[*]} --If ${aifactors[*]} --Of ${aofactors[*]} -o $offset --Ks $prot_kernel_sd"
+    echo "lcg-stimgen poisson-reg --P1 $amp --P2 -$freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[*]}  --Iu ${aiunits[*]} --Ou ${aounits[*]} --If ${aifactors[*]} --Of ${aofactors[*]} -o $offset --Ks $prot_kernel_sd $kernel"
+    eval "lcg-stimgen poisson-reg --P1 $amp --P2 -$freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[*]}  --Iu ${aiunits[*]} --Ou ${aounits[*]} --If ${aifactors[*]} --Of ${aofactors[*]} -o $offset --Ks $prot_kernel_sd $kernel"
     IFS=$SAVE_IFS
 else
     prot_set_lcg_var $headstage "cc"
