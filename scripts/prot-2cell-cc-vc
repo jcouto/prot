@@ -5,7 +5,7 @@
 amp=-300
 dur=60
 n=1
-i=1
+interval=1
 pw=1000
 T=1
 freq=0.5
@@ -15,34 +15,37 @@ figures=$prot_figures
 headstage="0,1"
 offset=0
 
-usage="Dual cell pulses protocol. Injects current pulses in a cell \n
-to charactherize its time constant.\n
+usage=" Protocol to deliver pulses to one cell in CC and \n
+record evoked activity in VC on another cell
+
     Usage : `basename $0` [options <value>]\n
 \n
     Options:\n
-        \t-a amplitude		      Amplitude of the steps.\n
+        \t-a amplitude		      Amplitude of the pulses.\n
         \t   ($amp pA)       \n
         \t-d duration             Duration recording (ms).\n
         \t  ($dur ms)\n         
-        \t-p pulse-width             Duration of the pulse (ms).\n
+        \t-p pulse-width             Duration of the pulses (ms).\n
         \t  ($dur ms)\n         
+        \t-p frequency          Frequency of the pulses (Hz).\n
+        \t  ($freq Hz)\n         
         \t-i interval             Interval to wait between trials.\n
         \t  ($i sec)\n
         \t-n repetitions          Number of repetitions of each trial.\n
         \t  ($n)\n
         \t-H headstage            Headstage to use.\n
         \t  ($headstage)\n
+        \t-t tail				  Duration of the tail.\n
+        \t  ($T seconds)\n
         \t-h,--help               Display this help message and quit.\n
         \t--(no-)kernel			  (Does not) compute the kernel\n
         \t--(no-)prot             (Does not) run the steps\n
         \t--(no-)figures          (Does not) analyze the data\n
     
     Examples:\n
-        \tRun 10ms short pulses with -300 pA on headstage 2 \n
-        \t\t  prot-tau -a --300 -n 1 -d 10 -H 2\n
 
 "
-if ! options=$(getopt -o ha:f:o:p:d:i:n:H: --long no-kernel,kernel,no-prot,prot,no-figures,figures -- "$@")
+if ! options=$(getopt -o ha:f:o:p:d:i:t:n:H: --long no-kernel,kernel,no-prot,prot,no-figures,figures -- "$@")
 then
     echo -e $usage
     exit 1
@@ -63,11 +66,12 @@ do
     --figures) figures="yes" ;;
     # for options with required arguments, an additional shift is required
     -a) amp=$2 ; shift;;
+    -t) T=$2 ; shift;;
     -d) dur=$2 ; shift;;
     -p) pw=$2 ; shift;;
     -o) offset=$2 ; shift;;
     -f) freq=$2 ; shift;;
-    -i) i=$2 ; shift;;
+    -i) interval=$2 ; shift;;
     -n) n=$2 ; shift;;
     -H) headstage=$2 ; shift;;
     --) shift; break;;
@@ -109,6 +113,6 @@ if [ $kernel == "yes" ] ; then
 else
     kernel="--no-kernel"
 fi
-    echo "lcg-stimgen poisson-reg --P1 $amp --P2 -$freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[0]}  --Iu ${aiunits[*]} --Ou ${aounits[0]} --If ${aifactors[*]} --Of ${aofactors[0]} -o $offset --Ks $prot_kernel_sd" $kernel
-    eval "lcg-stimgen poisson-reg --P1 $amp --P2 -$freq --P3 $pw -d $dur -t $T -i $i -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[0]}  --Iu ${aiunits[*]} --Ou ${aounits[0]} --If ${aifactors[*]} --Of ${aofactors[0]} -o $offset --Ks $prot_kernel_sd" $kernel
+    echo "lcg-stimgen poisson-reg --P1 $amp --P2 -$freq --P3 $pw -d $dur -t $T -i $interval -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[0]}  --Iu ${aiunits[*]} --Ou ${aounits[0]} --If ${aifactors[*]} --Of ${aofactors[0]} -o $offset --Ks $prot_kernel_sd" $kernel
+    eval "lcg-stimgen poisson-reg --P1 $amp --P2 -$freq --P3 $pw -d $dur -t $T -i $interval -n $n -F $prot_srate $kernel -I ${ai[*]} -O ${ao[0]}  --Iu ${aiunits[*]} --Ou ${aounits[0]} --If ${aifactors[*]} --Of ${aofactors[0]} -o $offset --Ks $prot_kernel_sd" $kernel
 IFS=$SAVE_IFS
